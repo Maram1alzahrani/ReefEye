@@ -21,17 +21,40 @@ ReefEye classifies sampled points in reef photographs, displays model confidence
 - Backend: FastAPI and PyTorch.
 - Model architecture: Vision Transformer, ViT-B/16.
 
-## Model checkpoint
+## Get the project
 
-Trained model weights are not included in this repository.
+Install Git, Python 3.11, and a Node.js version supported by Vite, including npm.
 
-Place the compatible checkpoint at:
+```bash
+git clone https://github.com/Maram1alzahrani/ReefEye.git
+cd ReefEye
+```
+
+## Download the model
+
+The trained checkpoint is available in [ReefEye Model v1](https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1) as a separate download (approximately 327 MiB).
+
+From the repository root, run:
+
+```bash
+curl --fail --location --retry 3 \
+  "https://github.com/Maram1alzahrani/ReefEye/releases/download/model-v1/reef_point_classifier.pt" \
+  --output backend/model/reef_point_classifier.pt
+```
+
+Alternatively, download `reef_point_classifier.pt` from the release page and place it at:
 
 ```text
 backend/model/reef_point_classifier.pt
 ```
 
-Its architecture and classes must match `backend/model/config.json`.
+Keep the filename unchanged. The checkpoint architecture and classes must match `backend/model/config.json`.
+
+SHA-256:
+
+```text
+d865da5662ecd676904e46cdfb0f8e211c24e8bcb8384c2b31e83754a42a0319
+```
 
 ## Run the backend
 
@@ -45,7 +68,9 @@ python -m pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-The checkpoint is required for the backend to start.
+The checkpoint is required for the backend to start. Once startup completes, open http://127.0.0.1:8000/health; it should return `"status": "ready"`.
+
+On Windows, activate the virtual environment with `.venv\\Scripts\\activate` instead of `source .venv/bin/activate`.
 
 ## Run the frontend
 
@@ -57,7 +82,9 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite.
+Open the local URL printed by Vite. Keep both terminal processes running.
+
+Create a site and survey, upload a reef photograph, and run image analysis. Predictions require the backend on port 8000; the frontend alone cannot perform inference.
 
 ## Build the frontend
 
