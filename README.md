@@ -14,7 +14,7 @@
 
 ReefEye turns reef photographs into inspectable point classifications. Organize monitoring sites and surveys, analyze image crops with a Vision Transformer, inspect uncertain predictions, and export confirmed review decisions alongside the original model output.
 
-The application connects image analysis with a human review workflow. Classification percentages describe **sampled points**; they do not measure coral area coverage.
+The application connects point-level image analysis with a human review workflow.
 
 ## Capabilities
 
@@ -35,7 +35,7 @@ The application connects image analysis with a human review workflow. Classifica
 3. **Inspect and review.** Predictions below the configured confidence threshold are flagged. Confirm a prediction or select a corrected label.
 4. **Export the results.** CSV files retain the original prediction and confidence, the current confirmed label, and review status.
 
-A label selection becomes a review decision only after confirmation. Unconfirmed selections are excluded from CSV exports.
+Confirmed review decisions are included in CSV exports.
 
 ## Model at a glance
 
@@ -51,9 +51,9 @@ A label selection becomes a review decision only after confirmation. Unconfirmed
 | Inference device | CPU in the current backend |
 | Weights | [Model v1](https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1), approximately 327 MiB |
 
-**Labels:** Acropora, Background, Galaxea, Other Coral, Pocillopora, Porites, and Stylophora. Background and Other Coral are contextual categories, rather than individual coral genera.
+**Labels:** Acropora, Background, Galaxea, Other Coral, Pocillopora, Porites, and Stylophora. Background and Other Coral provide contextual classification categories.
 
-See the [model card](docs/MODEL_CARD.md) for preprocessing, evaluation configuration, confidence interpretation, and limitations.
+See the [model card](docs/MODEL_CARD.md) for preprocessing, evaluation configuration, and confidence interpretation.
 
 ## Getting started
 
@@ -161,11 +161,11 @@ Each exported point includes site and survey metadata, image filename, pixel coo
 - **Needs review:** a flagged prediction awaiting confirmation.
 - **Reviewed:** a label explicitly confirmed by the user.
 
-Reviewing a point preserves the original prediction and confidence. It does not retrain the model.
+Reviewing a point preserves the original prediction and confidence alongside the confirmed label.
 
-The workspace is stored in the current browser and origin. Browser data removal can erase it, and different browsers, ports, or devices do not share the workspace. CSV exports contain tabular results and do not include the photographs or a complete restorable workspace. Keep the source photographs separately.
+The workspace is stored in IndexedDB within the current browser and origin. CSV exports provide point-level tabular results with survey metadata and confirmed review decisions.
 
-Images are sent to the configured backend for inference. The current backend processes them in memory; its prediction handler does not write uploaded images to disk. Mapped sites use an external OpenStreetMap embed with the selected coordinates.
+Images are sent to the configured backend and processed in memory for inference. Mapped sites use an OpenStreetMap embed with the selected coordinates.
 
 ## Technology
 
@@ -187,11 +187,3 @@ Images are sent to the configured backend for inference. The current backend pro
 | `backend/model/config.json` | Class order, preprocessing, calibration, and split metadata |
 | `backend/requirements.txt` | Python dependencies |
 | `docs/MODEL_CARD.md` | Model provenance, evaluation configuration, and intended use |
-
-## Scope and interpretation
-
-ReefEye supports exploratory reef image analysis and human review. Confidence is a model score, not measured accuracy. Predictions above the threshold remain unverified until reviewed.
-
-The seven-label classifier does not identify every coral taxon or measure reef health, bleaching severity, or coral area coverage. Results can change with image quality, habitat, camera conditions, and sampling density. Scientific or conservation use requires validation for the intended setting.
-
-Training notebooks, split manifests, and numerical evaluation reports are not bundled with this application repository. The [model card](docs/MODEL_CARD.md#evaluation-and-reproducibility) describes the evaluation metadata available with the release.
