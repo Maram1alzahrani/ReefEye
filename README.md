@@ -70,7 +70,7 @@ uvicorn main:app --reload --port 8000
 
 The checkpoint is required for the backend to start. Once startup completes, open http://127.0.0.1:8000/health; it should return `"status": "ready"`.
 
-On Windows, activate the virtual environment with `.venv\\Scripts\\activate` instead of `source .venv/bin/activate`.
+On Windows, activate the virtual environment with `.venv\Scripts\activate` instead of `source .venv/bin/activate`.
 
 ## Run the frontend
 
