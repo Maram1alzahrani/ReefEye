@@ -76,6 +76,40 @@ The following evaluation metadata is recorded in the released configuration:
 
 The configuration also retains a `run_key` and `sampling_hash` to identify the recorded experiment and sampling setup.
 
+## Test results
+
+ViT-B/16 was selected from three candidate architectures using validation Macro F1, achieving **0.7487** on the validation set. Its final evaluation uses six held-out dive sites, with separate sites used for training, validation, and confidence calibration.
+
+### Classification performance
+
+Both test views use the same six held-out sites and the seven retained labels, with points sampled inside image boundaries. The per-class view samples up to two points per class per image; the uniform view samples up to six eligible points per image.
+
+| Metric | Per-class sampling (`test_balanced`) | Uniform eligible-point sampling (`test_uniform`) |
+| --- | ---: | ---: |
+| Evaluated points | 3,272 | 3,148 |
+| Accuracy | 77.72% | **84.82%** |
+| Macro F1 | **0.7525** | 0.6493 |
+| Weighted F1 | 0.7781 | **0.8668** |
+| Balanced accuracy | 74.06% | 76.40% |
+| ECE before calibration | 0.1263 | 0.0744 |
+| ECE after calibration | **0.0362** | **0.0184** |
+
+Temperature scaling improved confidence calibration in both test views. ECE uses 15 confidence bins, with lower values indicating closer agreement between confidence and observed accuracy.
+
+### Confidence-guided review
+
+At the calibrated confidence threshold of approximately **67.82%**, the model achieved **91.61% accuracy among above-threshold predictions** in the uniform test view. These predictions cover **81.4%** of evaluated points, while **18.6%** are flagged for human review.
+
+| Metric | Per-class sampling | Uniform eligible-point sampling |
+| --- | ---: | ---: |
+| Accuracy among above-threshold predictions | 86.04% | **91.61%** |
+| Above-threshold coverage | 76.7% | **81.4%** |
+| Points flagged for review | 23.3% | 18.6% |
+
+The above-threshold accuracy is measured before manual correction, on the subset meeting the confidence threshold.
+
+Results are transcribed from the supplied notebook's saved evaluation outputs for exported run `b03f3ddae1699f26`, matching the `run_key` prefix in [config.json](../backend/model/config.json). Percentages and scores are rounded for display.
+
 ## Intended use
 
 - Explore predicted labels at sampled locations in reef photographs.
