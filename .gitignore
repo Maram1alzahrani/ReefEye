@@ -1,0 +1,36 @@
+
+# macOS
+.DS_Store
+
+# Frontend
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Model weights and local data
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+checkpoints/
+datasets/
+data/
+uploads/
+
+# Logs
+*.log

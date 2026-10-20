@@ -1,0 +1,45 @@
+{
+  "dataset": "josauder/coralscapesV2",
+  "architecture": "vit_b_16",
+  "classes": [
+    "acropora",
+    "background",
+    "galaxea",
+    "other_coral",
+    "pocillopora",
+    "porites",
+    "stylophora"
+  ],
+  "crop_size": 224,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "temperature": 1.7974332571029663,
+  "review_threshold": 0.6782287788391114,
+  "task": "semantic-mask-derived point crop classification",
+  "split_unit": "dive site",
+  "seed": 42,
+  "excluded_low_support_classes": [
+    "goniopora",
+    "pavona",
+    "seriatopora"
+  ],
+  "run_key": "b03f3ddae1699f267f539a71ede9477cc58559e6b6a714e163489eb9f06e4991",
+  "sampling_hash": "3be49d34c842cb42",
+  "calibration_status": "target_met_on_calibration",
+  "evaluation_scope": "retained eligible labels, inner-image points only",
+  "sites": {
+    "train": 18,
+    "val": 9,
+    "cal": 8,
+    "test": 6
+  },
+  "point_format": "(row, column) = (y, x) in pixels"
+}
