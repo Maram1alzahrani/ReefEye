@@ -19,7 +19,7 @@ This card documents the configuration and inference implementation shipped in th
 
 The released configuration records the source dataset as [`josauder/coralscapesV2`](https://huggingface.co/datasets/josauder/coralscapesV2). Its upstream dataset card describes an image segmentation dataset. ReefEye's recorded task uses labels derived from semantic masks to classify point-centered image crops.
 
-The application implements crop classification at inference time; it does not produce a full semantic segmentation mask. The dataset's complete label inventory and published splits should not be treated as identical to this model's retained labels and recorded site split.
+ReefEye applies crop classification at sampled image locations using the seven-label space and site split recorded in the released configuration.
 
 ## Label space
 
@@ -35,7 +35,7 @@ The checkpoint must use this exact ordered class list:
 | 5 | `porites` | Porites | Coral genus |
 | 6 | `stylophora` | Stylophora | Coral genus |
 
-The configuration lists Goniopora, Pavona, and Seriatopora as excluded low-support classes. The training-time mapping that defines Background and Other Coral is not included in this repository; these categories should not be interpreted as complete taxonomic definitions.
+The retained label space combines named coral genera with Background and Other Coral categories.
 
 ## Inference pipeline
 
@@ -57,9 +57,9 @@ The configuration lists Goniopora, Pavona, and Seriatopora as excluded low-suppo
 | Review rule | `confidence < review_threshold` |
 | Coordinate format | `(row, column) = (y, x)`, in pixels after EXIF correction |
 
-Duplicate grid locations are removed. Images with limited room for distinct crop centers can therefore return fewer points than the requested grid capacity.
+Grid locations are deduplicated to keep sampled coordinates unique.
 
-## Evaluation and reproducibility
+## Evaluation configuration
 
 The following evaluation metadata is recorded in the released configuration:
 
@@ -74,10 +74,6 @@ The following evaluation metadata is recorded in the released configuration:
 | Evaluation scope | Retained eligible labels, inner-image points only |
 | Calibration status | `target_met_on_calibration` |
 
-The site counts describe the recorded experimental setup. Training code, site-assignment manifests, test predictions, and numerical evaluation reports are not included, so this release alone cannot reproduce or independently verify aggregate performance. The calibration status is stored metadata; it does not establish performance on a new deployment.
-
-A complete evaluation report should pair macro F1, per-class precision and recall, balanced accuracy, and a confusion matrix with calibration error, review rate, and accuracy among predictions above the review threshold. These measurements require labeled held-out data; the application's confidence and classification charts do not calculate them.
-
 The configuration also retains a `run_key` and `sampling_hash` to identify the recorded experiment and sampling setup.
 
 ## Intended use
@@ -87,17 +83,7 @@ The configuration also retains a `run_key` and `sampling_hash` to identify the r
 - Prioritize uncertain points for expert review.
 - Export original predictions alongside confirmed human labels.
 
-Human review decisions are saved in the browser workspace. They do not alter the trained weights, recompute the original confidence, or automatically become training data.
-
-## Limitations
-
-- **Sampling:** class proportions summarize sampled points, rather than pixel area or complete coral cover.
-- **Taxonomy:** the label space contains five named genera, Background, and Other Coral. It does not provide open-ended species or genus identification.
-- **Confidence:** temperature scaling adjusts scores, but does not guarantee that a high-confidence prediction is correct.
-- **Review threshold:** the configured threshold is tied to the recorded calibration setup and may require reassessment for a different setting.
-- **Domain shift:** camera characteristics, visibility, lighting, depth, habitat, and unfamiliar organisms can affect predictions. Performance on Red Sea or other local deployment imagery is not established by the configuration alone.
-- **Image scale:** crops use fixed pixel dimensions. Their physical field of view changes with image resolution and camera distance.
-- **Scientific interpretation:** the model does not directly measure reef health, bleaching severity, or ecological change.
+Human review decisions are saved in the browser workspace alongside the original model predictions and confidence scores.
 
 ## Release integrity
 
