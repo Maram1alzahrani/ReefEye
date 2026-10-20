@@ -1,40 +1,79 @@
-# ReefEye
+<div align="center">
+  <img src="frontend/public/logo.png" alt="ReefEye logo" width="112" />
+  <h1>ReefEye</h1>
+  <p><strong>A closer look beneath the surface.</strong></p>
+  <p>Coral reef image analysis with deep learning, confidence-guided review, and survey management.</p>
+  <p>
+    <a href="#getting-started">Getting started</a> ·
+    <a href="docs/MODEL_CARD.md">Model card</a> ·
+    <a href="https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1">Download weights</a>
+  </p>
+</div>
 
-A coral reef image analysis application built with deep learning and computer vision.
+---
 
-ReefEye classifies sampled points in reef photographs, displays model confidence, and supports human review of uncertain predictions.
+ReefEye turns reef photographs into inspectable point classifications. Organize monitoring sites and surveys, analyze image crops with a Vision Transformer, inspect uncertain predictions, and export confirmed review decisions alongside the original model output.
 
-## Features
+The application connects image analysis with a human review workflow. Classification percentages describe **sampled points**; they do not measure coral area coverage.
 
-- Dashboard for monitoring sites, surveys, and review progress.
-- Survey library with multiple photographs per survey.
-- Site maps using recorded coordinates.
-- Interactive point predictions and image crops.
-- Human review with confirmed labels and undo.
-- Classification distribution based on sampled points.
-- CSV export with original predictions and review decisions.
-- Local workspace persistence using IndexedDB.
+## Capabilities
 
-## Technology
+| Area | What you can do |
+| --- | --- |
+| Site management | Record monitoring sites and optional coordinates; view mapped sites. |
+| Survey workspace | Group photographs by site and survey, with date, depth, visibility, and notes. |
+| Point analysis | Choose a 5 × 5, 7 × 7, or 10 × 10 grid, with up to 25, 49, or 100 sampled points. |
+| Prediction inspection | Select image markers, inspect local crops, and filter points by class or review status. |
+| Human review | Confirm or correct labels, move through flagged points, and undo the latest review. |
+| Reporting | Inspect class distributions and export point-level CSV results. |
+| Local persistence | Keep the workspace, photographs, predictions, and review decisions in browser IndexedDB. |
 
-- Frontend: React, TypeScript, and Vite.
-- Backend: FastAPI and PyTorch.
-- Model architecture: Vision Transformer, ViT-B/16.
+## How it works
 
-## Get the project
+1. **Create a site and survey.** Add survey metadata and upload reef photographs.
+2. **Analyze a photograph.** The backend samples image locations, extracts 224 × 224 pixel crops, and predicts one label per crop.
+3. **Inspect and review.** Predictions below the configured confidence threshold are flagged. Confirm a prediction or select a corrected label.
+4. **Export the results.** CSV files retain the original prediction and confidence, the current confirmed label, and review status.
 
-Install Git, Python 3.11, and a Node.js version supported by Vite, including npm.
+A label selection becomes a review decision only after confirmation. Unconfirmed selections are excluded from CSV exports.
+
+## Model at a glance
+
+| Property | Released configuration |
+| --- | --- |
+| Architecture | ViT-B/16 (`vit_b_16`) |
+| Task | Semantic-mask-derived point crop classification |
+| Dataset recorded in configuration | [josauder/coralscapesV2](https://huggingface.co/datasets/josauder/coralscapesV2) |
+| Input crop | 224 × 224 RGB pixels |
+| Output | Seven classification labels |
+| Confidence | Temperature-scaled softmax; review threshold approximately 67.82% |
+| Split unit | Dive site: 18 training, 9 validation, 8 calibration, 6 test sites |
+| Inference device | CPU in the current backend |
+| Weights | [Model v1](https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1), approximately 327 MiB |
+
+**Labels:** Acropora, Background, Galaxea, Other Coral, Pocillopora, Porites, and Stylophora. Background and Other Coral are contextual categories, rather than individual coral genera.
+
+See the [model card](docs/MODEL_CARD.md) for preprocessing, evaluation configuration, confidence interpretation, and limitations.
+
+## Getting started
+
+### Requirements
+
+- Git.
+- Python 3.11 for the backend.
+- Node.js 22.12+ with npm, or another version supported by [Vite](https://vite.dev/guide/).
+- A modern browser with IndexedDB support.
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Maram1alzahrani/ReefEye.git
 cd ReefEye
 ```
 
-## Download the model
+### 2. Download the model
 
-The trained checkpoint is available in [ReefEye Model v1](https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1) as a separate download (approximately 327 MiB).
-
-From the repository root, run:
+From the repository root:
 
 ```bash
 curl --fail --location --retry 3 \
@@ -42,39 +81,49 @@ curl --fail --location --retry 3 \
   --output backend/model/reef_point_classifier.pt
 ```
 
-Alternatively, download `reef_point_classifier.pt` from the release page and place it at:
+Alternatively, download the checkpoint from the [release page](https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1) and save it as `backend/model/reef_point_classifier.pt`.
 
-```text
-backend/model/reef_point_classifier.pt
-```
+<details>
+<summary>Verify the checkpoint</summary>
 
-Keep the filename unchanged. The checkpoint architecture and classes must match `backend/model/config.json`.
-
-SHA-256:
+Expected SHA-256:
 
 ```text
 d865da5662ecd676904e46cdfb0f8e211c24e8bcb8384c2b31e83754a42a0319
 ```
 
-## Run the backend
+On macOS:
 
-From the repository root:
+```bash
+shasum -a 256 backend/model/reef_point_classifier.pt
+```
+
+The backend checks that the checkpoint architecture and ordered class list match `backend/model/config.json`.
+
+</details>
+
+### 3. Start the backend
 
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --reload --port 8000
 ```
 
-The checkpoint is required for the backend to start. Once startup completes, open http://127.0.0.1:8000/health; it should return `"status": "ready"`.
+The checkpoint must be present before startup. After `Application startup complete` appears, open:
 
-On Windows, activate the virtual environment with `.venv\Scripts\activate` instead of `source .venv/bin/activate`.
+- Health check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health).
+- Interactive API documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
-## Run the frontend
+The health response should include `"status": "ready"`.
 
-In another terminal, from the repository root:
+On Windows, use `py -3.11 -m venv .venv` to create the environment. Activate it with `.venv\Scripts\activate.bat` in Command Prompt or `.\.venv\Scripts\Activate.ps1` in PowerShell.
+
+### 4. Start the frontend
+
+In a second terminal, from the repository root:
 
 ```bash
 cd frontend
@@ -82,24 +131,67 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. Keep both terminal processes running.
+Open the local URL printed by Vite and keep both processes running. The frontend currently connects to `http://127.0.0.1:8000`.
 
-Create a site and survey, upload a reef photograph, and run image analysis. Predictions require the backend on port 8000; the frontend alone cannot perform inference.
-
-## Build the frontend
+### Build the frontend
 
 ```bash
 cd frontend
 npm run build
 ```
 
-## Interpretation and storage
+The production frontend is written to `frontend/dist/`. A working deployment also requires the inference backend, an appropriate API URL, and CORS configuration for the deployed frontend origin.
 
-- Classification percentages describe sampled points, not coral area coverage.
-- Model confidence is not measured accuracy.
-- Unreviewed predictions remain model-generated labels.
-- Sites, surveys, photographs, and reviews are stored in the current browser.
-- CSV exports exclude image files and unconfirmed selections.
-- Clearing browser data can remove the local workspace.
+## API
 
-This project supports reef image analysis and human review. Predictions require appropriate validation before use in scientific or conservation decisions.
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Report loaded model architecture and classes. |
+| POST | `/predict` | Analyze an uploaded image using a sampling grid. |
+
+`/predict` accepts multipart fields `file` and `grid_size`. The API accepts integer grid sizes from 2 to 10; the interface provides 5, 7, and 10.
+
+Image limits: at least 224 × 224 pixels, at most 20 MiB, and at most 25 megapixels. Returned coordinates use `row = y` and `column = x` in the EXIF-corrected image.
+
+## Results and storage
+
+Each exported point includes site and survey metadata, image filename, pixel coordinates, original prediction, original confidence, original review flag, threshold, current label, and review status.
+
+- **Model prediction:** an unreviewed prediction above the review threshold.
+- **Needs review:** a flagged prediction awaiting confirmation.
+- **Reviewed:** a label explicitly confirmed by the user.
+
+Reviewing a point preserves the original prediction and confidence. It does not retrain the model.
+
+The workspace is stored in the current browser and origin. Browser data removal can erase it, and different browsers, ports, or devices do not share the workspace. CSV exports contain tabular results and do not include the photographs or a complete restorable workspace. Keep the source photographs separately.
+
+Images are sent to the configured backend for inference. The current backend processes them in memory; its prediction handler does not write uploaded images to disk. Mapped sites use an external OpenStreetMap embed with the selected coordinates.
+
+## Technology
+
+| Layer | Stack |
+| --- | --- |
+| Interface | React, TypeScript, Vite |
+| Workspace storage | IndexedDB |
+| Inference API | FastAPI, Uvicorn |
+| Model execution | PyTorch, torchvision |
+| Image processing | Pillow, NumPy |
+
+## Repository guide
+
+| Path | Contents |
+| --- | --- |
+| `frontend/src/App.tsx` | Survey workspace, analysis, review, and export workflows |
+| `frontend/src/App.css` | Application styles and responsive layouts |
+| `backend/main.py` | Model startup, health check, and prediction endpoint |
+| `backend/model/config.json` | Class order, preprocessing, calibration, and split metadata |
+| `backend/requirements.txt` | Python dependencies |
+| `docs/MODEL_CARD.md` | Model provenance, evaluation configuration, and intended use |
+
+## Scope and interpretation
+
+ReefEye supports exploratory reef image analysis and human review. Confidence is a model score, not measured accuracy. Predictions above the threshold remain unverified until reviewed.
+
+The seven-label classifier does not identify every coral taxon or measure reef health, bleaching severity, or coral area coverage. Results can change with image quality, habitat, camera conditions, and sampling density. Scientific or conservation use requires validation for the intended setting.
+
+Training notebooks, split manifests, and numerical evaluation reports are not bundled with this application repository. The [model card](docs/MODEL_CARD.md#evaluation-and-reproducibility) describes the evaluation metadata available with the release.
