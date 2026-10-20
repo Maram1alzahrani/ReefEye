@@ -53,7 +53,20 @@ Confirmed review decisions are included in CSV exports.
 
 **Labels:** Acropora, Background, Galaxea, Other Coral, Pocillopora, Porites, and Stylophora. Background and Other Coral provide contextual classification categories.
 
-See the [model card](docs/MODEL_CARD.md) for preprocessing, evaluation configuration, and confidence interpretation.
+See the [model card](docs/MODEL_CARD.md) for preprocessing, test results, evaluation configuration, and confidence interpretation.
+
+## Performance highlights
+
+Evaluated on six held-out dive sites:
+
+| Result | Evaluation context |
+| --- | --- |
+| **84.82% accuracy** | 3,148 uniformly sampled eligible test points |
+| **91.61% accuracy among above-threshold predictions** | Uniform test view; 81.4% coverage, with 18.6% flagged for human review |
+| **0.7525 Macro F1** | 3,272 test points sampled per class within each image |
+| **ECE improved from 0.0744 to 0.0184** | Temperature-calibrated confidence on the uniform test view |
+
+Above-threshold accuracy is measured on the confidence-selected subset before human correction. See the [full test results](docs/MODEL_CARD.md#test-results) for both sampling protocols, classification metrics, and review coverage.
 
 ## Getting started
 
