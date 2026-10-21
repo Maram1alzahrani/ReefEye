@@ -58,6 +58,12 @@ The core workspace relationship is **Site → Survey → Photographs → Sampled
 
 The React frontend manages the workspace and visualization. The FastAPI backend runs the trained model. IndexedDB persists photographs, analysis results, and review decisions within the current browser and origin.
 
+### Application preview
+
+![ReefEye AI analysis with a 25-point sampling grid and confidence-guided review](docs/images/ai-analysis.png)
+
+*Interactive point classification with survey information, calibrated confidence, and review flags.*
+
 ## 3. Implemented Features
 
 | Feature | Implementation |
@@ -426,6 +432,10 @@ The frontend build is generated in `frontend/dist/`. Keep the backend running wh
 
 ReefEye preserves the original model output alongside the review decision.
 
+![ReefEye human review table with pending points and label selection](docs/images/human-review.png)
+
+*Review pending predictions, choose a label, and confirm each decision alongside the sampled class distribution.*
+
 | Status | Meaning |
 | --- | --- |
 | `Model prediction` | An unreviewed prediction meeting the confidence threshold. |
@@ -529,6 +539,10 @@ curl --fail --request POST http://127.0.0.1:8000/explain \
 ## 17. Explainable AI
 
 ReefEye provides **class-specific Grad-CAM explanations** for individual sampled points. It reuses the released ViT checkpoint; no additional model download or retraining is required.
+
+![ReefEye Grad-CAM panel showing an Acropora attribution overlay and opacity control](docs/images/gradcam-explanation.png)
+
+*Class-specific Grad-CAM with original-image comparison and adjustable heatmap opacity.*
 
 ### How the explanation is generated
 
