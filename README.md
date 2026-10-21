@@ -7,6 +7,7 @@
     <a href="#5-architecture">Architecture</a> ·
     <a href="#10-performance-metrics">Performance</a> ·
     <a href="#11-installation-and-setup">Installation</a> ·
+    <a href="#17-explainable-ai">XAI</a> ·
     <a href="docs/MODEL_CARD.md">Model Card</a> ·
     <a href="https://github.com/Maram1alzahrani/ReefEye/releases/tag/model-v1">Model Weights</a>
   </p>
@@ -14,7 +15,7 @@
 
 ---
 
-ReefEye brings reef photographs, model predictions, and human review into one workspace. It combines a Vision Transformer classifier with interactive image inspection, confidence-based review, and structured survey records.
+ReefEye brings reef photographs, model predictions, and human review into one workspace. It combines a Vision Transformer classifier with interactive image inspection, Grad-CAM explanations, confidence-based review, and structured survey records.
 
 ## Table of Contents
 
@@ -34,6 +35,8 @@ ReefEye brings reef photographs, model predictions, and human review into one wo
 14. [Usage Guide](#14-usage-guide)
 15. [Review and Export Pipeline](#15-review-and-export-pipeline)
 16. [API Documentation](#16-api-documentation)
+17. [Explainable AI](#17-explainable-ai)
+18. [XAI Validation](#18-xai-validation)
 
 ## 1. Problem Statement
 
@@ -66,6 +69,8 @@ The React frontend manages the workspace and visualization. The FastAPI backend 
 | Interactive predictions | Selectable image markers, point labels, class filters, confidence display, and crop inspection. |
 | Confidence-based review | Automatic flags for predictions below the calibrated review threshold. |
 | Human review | Confirm or correct labels, navigate pending points, and undo the latest review decision. |
+| Explainable AI | On-demand Grad-CAM for individual point crops, with original/overlay views and adjustable opacity. |
+| XAI diagnostics | Standalone model-randomization and patch-deletion tests with saved maps and JSON reports. |
 | Coral directory | Browse supported classes using examples from analyzed workspace photographs. |
 | CSV export | Export survey metadata, original predictions, confidence scores, and confirmed labels. |
 | Workspace persistence | Browser-based storage of sites, surveys, images, and analysis state. |
@@ -77,7 +82,7 @@ The React frontend manages the workspace and visualization. The FastAPI backend 
 | 1. Register | Create a monitoring site and survey. | A survey record linked to its site. |
 | 2. Upload | Add reef photographs and survey metadata. | A photograph collection within the survey. |
 | 3. Analyze | Select a sampling grid and run analysis. | Point coordinates, predicted labels, confidence, and review flags. |
-| 4. Inspect | Select points and examine their local image crops. | Visual context for individual predictions. |
+| 4. Inspect | Select points, examine their crops, and optionally generate Grad-CAM. | Image context and class-specific attribution for individual predictions. |
 | 5. Review | Confirm the model label or select and confirm a correction. | A recorded human review decision. |
 | 6. Export | Download image or survey results as CSV. | A table retaining original and confirmed labels. |
 
@@ -94,18 +99,22 @@ flowchart TB
     end
 
     subgraph Service["FastAPI Inference Service"]
-        API["Health and Prediction Endpoints"]
+        API["Health, Prediction, and Explanation API"]
         PRE["Image Validation and Crop Sampling"]
         MODEL["ViT-B/16 Classifier"]
         SCORE["Temperature Scaling and Review Flags"]
+        CAM["Grad-CAM on Selected Crop"]
         API --> PRE
         PRE --> MODEL
         MODEL --> SCORE
         SCORE -->|Point results| API
+        PRE -->|Selected crop for explanation| CAM
+        MODEL -->|Features and gradients| CAM
+        CAM -->|Crop and heatmap| API
     end
 
     ASSETS["Model Checkpoint and Configuration"]
-    UI -->|GET /health and POST /predict| API
+    UI -->|Health, prediction, and explanation requests| API
     API -->|JSON responses| UI
     ASSETS -->|Weights and class order| MODEL
     ASSETS -->|Temperature and threshold| SCORE
@@ -117,10 +126,11 @@ flowchart TB
 | --- | --- |
 | React interface | Coordinates navigation, surveys, analysis requests, point inspection, and review actions. |
 | IndexedDB | Stores workspace records, photograph blobs, predictions, and confirmed review labels. |
-| FastAPI | Loads the model at startup and serves health checks and image analysis requests. |
+| FastAPI | Loads the model at startup and serves health, prediction, and explanation requests. |
 | Image processing | Applies EXIF orientation, converts to RGB, and extracts normalized 224 × 224 crops. |
 | PyTorch model | Executes ViT-B/16 inference on CPU in the application backend. |
 | Confidence processing | Applies temperature-scaled softmax and flags scores below the review threshold. |
+| Grad-CAM | Uses selected-class gradients and patch features from the trained ViT to generate crop-level attribution. |
 | CSV export | Builds tabular reports in the browser from stored predictions and confirmed decisions. |
 
 Site maps are displayed through an OpenStreetMap embed using the selected site's coordinates.
@@ -131,12 +141,15 @@ Site maps are displayed through an OpenStreetMap embed using the selected site's
 | --- | --- |
 | `README.md` | Project overview, architecture, evaluation, and operating instructions. |
 | `docs/MODEL_CARD.md` | Model configuration, label definitions, test results, and inference details. |
-| `backend/main.py` | FastAPI application, model startup, image processing, and prediction endpoints. |
+| `backend/main.py` | FastAPI application, model startup, image processing, prediction, and Grad-CAM explanations. |
+| `backend/validate_xai.py` | Standalone randomization and deletion diagnostics using the shared Grad-CAM function. |
 | `backend/requirements.txt` | Backend Python dependencies. |
 | `backend/model/config.json` | Architecture, ordered labels, normalization, calibration, and experiment metadata. |
 | `backend/model/reef_point_classifier.pt` | Trained checkpoint downloaded from the model release. |
 | `frontend/src/App.tsx` | Workspace data, application views, analysis requests, review, and export logic. |
 | `frontend/src/App.css` | Interface styling and responsive layouts. |
+| `frontend/src/PointExplanation.tsx` | Point explanation requests, original/Grad-CAM views, and opacity controls. |
+| `frontend/src/PointExplanation.css` | Explanation panel styling. |
 | `frontend/src/main.tsx` | React application entry point. |
 | `frontend/src/index.css` | Global base styles. |
 | `frontend/public/` | Public branding and interface assets. |
@@ -398,6 +411,8 @@ The frontend build is generated in `frontend/dist/`. Keep the backend running wh
 3. Run analysis and select a point on the image.
 4. Inspect its crop, predicted label, and calibrated confidence.
 5. Use class and review filters to focus the displayed points.
+6. Select **Explain prediction** in the point inspector to generate Grad-CAM.
+7. Switch between **Original** and **Grad-CAM**, and adjust **Heatmap opacity**.
 
 ### Confirm review decisions
 
@@ -443,6 +458,7 @@ The backend provides interactive documentation at [http://127.0.0.1:8000/docs](h
 | --- | --- | --- |
 | `GET` | `/health` | Return readiness status, architecture, and supported classes. |
 | `POST` | `/predict` | Analyze sampled points in an uploaded reef image. |
+| `POST` | `/explain` | Generate Grad-CAM for a specified point crop and target class. |
 
 ### Prediction request
 
@@ -475,6 +491,163 @@ curl --fail --request POST http://127.0.0.1:8000/predict \
 | `review_threshold` | Calibrated confidence threshold |
 
 Coordinates use `(row, column) = (y, x)` in the EXIF-corrected image. Images are processed in memory by the inference service.
+
+
+### Explanation request
+
+`POST /explain` accepts multipart form data:
+
+| Field | Type | Configuration |
+| --- | --- | --- |
+| `file` | Image file | Required; use the photograph analyzed by `/predict`. |
+| `row` | Integer | Pixel y-coordinate in the EXIF-corrected image. |
+| `column` | Integer | Pixel x-coordinate in the EXIF-corrected image. |
+| `target_label` | String | Exact model label, such as `acropora`; the interface uses the point's original prediction. |
+
+The point must allow a complete 224 × 224 crop within the image. Use coordinates and the label returned by `/predict`. This example targets a crop centered at `(112, 112)`:
+
+```bash
+curl --fail --request POST http://127.0.0.1:8000/explain \
+  --form "file=@reef-photo.jpg" \
+  --form "row=112" \
+  --form "column=112" \
+  --form "target_label=acropora"
+```
+
+### Explanation response
+
+| Response field | Contents |
+| --- | --- |
+| `method`, `target_layer` | `Grad-CAM` and `encoder.layers[-1].ln_1` |
+| `row`, `column`, `target_label` | Requested coordinates and explained class |
+| `target_confidence` | Temperature-scaled probability of the requested class |
+| `prediction` | Current model's highest-probability class for the crop |
+| `has_signal` | Whether a nonzero positive attribution map was obtained |
+| `crop_image` | Original RGB crop as a base64 PNG data URL |
+| `heatmap_image` | Transparent RGBA heatmap as a PNG data URL, or `null` when no positive signal exists |
+
+## 17. Explainable AI
+
+ReefEye provides **class-specific Grad-CAM explanations** for individual sampled points. It reuses the released ViT checkpoint; no additional model download or retraining is required.
+
+### How the explanation is generated
+
+1. Extract the same normalized 224 × 224 crop used for point classification.
+2. Capture features at `model.encoder.layers[-1].ln_1`, before the final attention block.
+3. Differentiate the requested class logit with respect to those features.
+4. Exclude the class token and combine the spatial patch features using gradient-derived channel weights.
+5. Retain positive contributions, interpolate to crop resolution, and normalize the map for display.
+
+The overlay uses warmer colors for stronger positive attribution to the target class score. Each map is normalized separately, so its color intensity describes relative attribution within that crop. The displayed percentage is the target class's calibrated confidence.
+
+### Using the explanation panel
+
+After analyzing a photograph, select a point and click **Explain prediction**. Use **Original** and **Grad-CAM** to compare the views, **Heatmap opacity** to adjust the overlay, and **Regenerate explanation** to request it again.
+
+Explanations target the original model label. Confirmed human labels remain separate, and generating an explanation does not update model weights or review decisions. If no positive activation is obtained, the panel reports that state instead of displaying a generated heatmap.
+
+Grad-CAM visualizes model attribution rather than coral segmentation boundaries. Quantitative checks are available through the validation script below.
+
+## 18. XAI Validation
+
+[`backend/validate_xai.py`](backend/validate_xai.py) evaluates the same `gradcam` function used by the API. It runs directly on the local checkpoint and configuration, independently of the web server. Backend dependencies from Section 11 are sufficient.
+
+**Evaluation status:** The diagnostic implementation is included; measured results for the released checkpoint have not yet been reported.
+
+### Diagnostic protocol
+
+| Check | Procedure | Recorded evidence |
+| --- | --- | --- |
+| Model randomization | Compare the trained map with maps from fully reinitialized ViT models using seeds 11, 22, and 33. Keep the crop and trained model's predicted target class fixed. | Patch-level Pearson correlation, mean absolute map difference, and near-identical-map counts. |
+| Patch deletion | Progressively replace approximately 10%, 20%, 30%, and 50% of patches, starting from the original input at 0%. Compare hot-first, cold-first, and repeated random deletion. | Target-class confidence curves, confidence drops, and partial area under each curve. |
+| Replacement baseline | Use the configured normalization mean or a Gaussian-blurred version of the crop for every deletion order. | Separate reports for each baseline. |
+
+The random models use a nonzero randomly initialized classification head so gradients can propagate. No model is trained during these diagnostics. Missing or constant maps are recorded as inconclusive comparisons.
+
+### Run on one image
+
+From the repository root, activate the backend environment:
+
+```bash
+cd backend
+source .venv/bin/activate
+```
+
+Replace the example path with an existing image:
+
+```bash
+python validate_xai.py "/path/to/reef-photo.jpg"
+```
+
+The default selects one crop at the image center. To inspect a specific analyzed location, supply its coordinates from `/predict` or the CSV export:
+
+```bash
+python validate_xai.py "/path/to/reef-photo.jpg" \
+  --row 500 \
+  --column 700
+```
+
+Coordinates refer to the EXIF-corrected image and must permit a complete crop. The script explains the current trained model's predicted class at that location.
+
+### Run on a collection of images
+
+Use a representative collection of held-out photographs. Folder mode selects one center crop per image, processes supported files in sorted order, and stops at `--max-images`.
+
+```bash
+python validate_xai.py "/path/to/test-images" \
+  --max-images 20 \
+  --random-trials 10 \
+  --baseline mean \
+  --output xai_validation_mean
+```
+
+Repeat with the same images and a blurred replacement baseline:
+
+```bash
+python validate_xai.py "/path/to/test-images" \
+  --max-images 20 \
+  --random-trials 10 \
+  --baseline blur \
+  --output xai_validation_blur
+```
+
+### Command options
+
+| Argument | Default | Purpose |
+| --- | --- | --- |
+| `images` | Required | Image file or folder; folders support JPG, JPEG, PNG, and WebP. |
+| `--row`, `--column` | Image center | Supply both for a single image to select a specific point. |
+| `--max-images` | `5` | Maximum images processed in folder mode. |
+| `--seeds` | `11 22 33` | Random-model initialization seeds. |
+| `--random-trials` | `5` | Random deletion orders per crop; minimum 2. |
+| `--baseline` | `mean` | Replacement policy: `mean` or `blur`. |
+| `--output` | `xai_validation` | Destination folder for reports and images. |
+
+### Saved outputs
+
+| Output | Contents |
+| --- | --- |
+| `report.json` | Protocol settings, aggregate summary, per-crop randomization metrics, and deletion curves. |
+| `001_<image-stem>/crop.png` | Evaluated crop; each image has its own numbered folder. |
+| `trained_cam.png` | Normalized trained-model attribution, saved as grayscale when a signal exists. |
+| `random_cam_<seed>.png` | Normalized attribution from each randomized model when a signal exists. |
+
+### Reading the results
+
+| Metric | Interpretation |
+| --- | --- |
+| `mean_pearson` | Average correlation between trained and randomized patch-level maps. Values close to 1 indicate similar spatial patterns. |
+| `mean_absolute_difference` | Per-comparison absolute difference between normalized patch-level maps. |
+| `nearly_identical_comparisons` | Comparisons equal within absolute tolerance `1e-5`; these warrant inspection. |
+| `inconclusive_comparisons` | Comparisons excluded because a map was absent or spatially constant. |
+| `hot_drop_percentage_points` | Reduction in the original target's confidence at each hot-first deletion fraction; negative values indicate an increase. |
+| `random_drop_percentage_points` | Corresponding reduction for the mean random-deletion curve. |
+| `hot_partial_auc`, `cold_partial_auc`, `random_mean_partial_auc` | Average target probability over the tested deletion range, approximately 0–50%. Lower values mean less confidence retained. |
+| `random_minus_hot_partial_auc` | Positive values mean hot-first deletion retained less confidence on average than random deletion. |
+| `mean_random_minus_hot_partial_auc` | Mean of that difference across crops with a trained-model attribution map. |
+
+Inspect per-crop curves and random-trial variation alongside aggregate values. Evidence supporting the explanation includes sensitivity to model randomization and a greater confidence reduction under hot-first deletion than under random or cold-first deletion across representative crops and both replacement baselines. These are diagnostic measurements, with no universal pass threshold or automatic validity claim.
+
 
 ---
 
