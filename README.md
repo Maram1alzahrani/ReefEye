@@ -552,8 +552,6 @@ Grad-CAM visualizes model attribution rather than coral segmentation boundaries.
 
 [`backend/validate_xai.py`](backend/validate_xai.py) evaluates the same `gradcam` function used by the API. It runs directly on the local checkpoint and configuration, independently of the web server. Backend dependencies from Section 11 are sufficient.
 
-**Evaluation status:** The diagnostic implementation is included; measured results for the released checkpoint have not yet been reported.
-
 ### Diagnostic protocol
 
 | Check | Procedure | Recorded evidence |
