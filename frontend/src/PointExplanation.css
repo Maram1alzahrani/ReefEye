@@ -1,0 +1,170 @@
+.xai-panel {
+    margin: 20px 0;
+    padding: 16px;
+    color: #18334a;
+    background: #f3f9f9;
+    border: 1px solid #cfe4e5;
+    border-radius: 12px;
+  }
+
+  .xai-heading,
+  .xai-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .xai-heading h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .xai-badge {
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: #d8eeeb;
+    color: #12615e;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .xai-copy,
+  .xai-status,
+  .xai-error,
+  .xai-footnote {
+    margin: 10px 0;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .xai-copy,
+  .xai-footnote {
+    color: #456070;
+  }
+
+  .xai-button {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #0b6665;
+    border-radius: 8px;
+    background: #0b6665;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .xai-button:hover:not(:disabled) {
+    background: #084f50;
+  }
+
+  .xai-panel button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .xai-panel button:focus-visible,
+  .xai-panel input:focus-visible {
+    outline: 3px solid #0f766e;
+    outline-offset: 3px;
+  }
+
+  .xai-status {
+    color: #0b6665;
+  }
+
+  .xai-error {
+    color: #9e2828;
+  }
+
+  .xai-result {
+    margin-top: 14px;
+  }
+
+  .xai-views {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    background: #e1eded;
+    border-radius: 9px;
+  }
+
+  .xai-views button {
+    min-height: 40px;
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #365362;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .xai-views button[aria-pressed='true'] {
+    background: #fff;
+    color: #0c5755;
+    border-color: #bad4d2;
+    font-weight: 600;
+  }
+
+  .xai-figure {
+    margin: 12px 0;
+  }
+
+  .xai-image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .xai-image > img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .xai-image > .xai-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .xai-figure figcaption {
+    margin-top: 8px;
+    color: #456070;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .xai-opacity {
+    display: grid;
+    gap: 6px;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+
+  .xai-opacity input {
+    width: 100%;
+    min-height: 28px;
+    accent-color: #0b6665;
+  }
+
+  .xai-meta {
+    padding-top: 10px;
+    border-top: 1px solid #cfe4e5;
+    font-size: 11px;
+  }
+
+  .xai-footnote {
+    margin-bottom: 0;
+    font-size: 11px;
+  }

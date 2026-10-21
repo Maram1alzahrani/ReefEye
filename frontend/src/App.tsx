@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
+import PointExplanation from './PointExplanation'
 
 type Page =
   | 'dashboard'
@@ -767,6 +768,7 @@ function App() {
 
   const [classFilter, setClassFilter] = useState('all')
   const [pendingOnly, setPendingOnly] = useState(false)
+
   const [busyPhotoId, setBusyPhotoId] =
     useState<string | null>(null)
 
@@ -1073,9 +1075,11 @@ function App() {
 
     const data = new FormData(event.currentTarget)
     const name = String(data.get('name') ?? '').trim()
+
     const latitudeText = String(
       data.get('latitude') ?? ''
     ).trim()
+
     const longitudeText = String(
       data.get('longitude') ?? ''
     ).trim()
@@ -1158,11 +1162,13 @@ function App() {
     if (!validateFiles(newSurveyFiles)) return
 
     const depthText = String(data.get('depth') ?? '').trim()
+
     const visibilityText = String(
       data.get('visibility') ?? ''
     ).trim()
 
     const depth = depthText ? Number(depthText) : null
+
     const visibility = visibilityText
       ? Number(visibilityText)
       : null
@@ -1616,6 +1622,7 @@ function App() {
 
           <div className="survey-card-footer">
             <span>{photos.length} photographs</span>
+
             <button
               className="text-button"
               onClick={() => openSurvey(survey.id)}
@@ -1642,7 +1649,9 @@ function App() {
             <span className="eyebrow">
               REEFEYE OBSERVATORY
             </span>
+
             <h2>A closer look beneath the surface.</h2>
+
             <p>
               Follow your reef observations from photograph
               to review.
@@ -1746,6 +1755,7 @@ function App() {
 
                       <span>
                         <strong>{survey.name}</strong>
+
                         <small>
                           {site?.name} · {formatDate(survey.date)}
                         </small>
@@ -1968,10 +1978,13 @@ function App() {
         {showMarkers &&
           visible.map(point => {
             const label = currentLabel(activePhoto, point)
+
             const reviewed =
               activePhoto.decisions[point.point]?.reviewed
+
             const selected =
               activePoint?.point === point.point
+
             const needsReview =
               point.needs_review && !reviewed
 
@@ -2162,6 +2175,15 @@ function App() {
           Model confidence is not measured accuracy.
         </p>
 
+        <PointExplanation
+          key={`${photo.id}:${point.point}:${point.confidence}`}
+          apiBase={API}
+          file={photo.blob}
+          filename={photo.filename}
+          point={point}
+          disabled={busyPhotoId === photo.id}
+        />
+
         <div className="point-navigation">
           <button
             className="button secondary"
@@ -2278,6 +2300,7 @@ function App() {
       return (
         <section className="panel empty">
           <h2>Start with a survey</h2>
+
           <p>
             Create a monitoring site and a survey,
             then upload your photographs.
@@ -2340,6 +2363,7 @@ function App() {
 
           <label className="button secondary upload-button">
             Add photographs
+
             <input
               type="file"
               multiple
@@ -2372,6 +2396,7 @@ function App() {
         {!activePhoto ? (
           <section className="panel empty">
             <h2>This survey has no photographs yet</h2>
+
             <p>
               Use “Add photographs” to build its image album.
             </p>
@@ -2410,6 +2435,7 @@ function App() {
                   <div className="panel-heading">
                     <div className="filename-heading">
                       <h2>{activePhoto.filename}</h2>
+
                       <p>
                         {surveyPhotos.findIndex(
                           photo => photo.id === activePhoto.id
@@ -2453,9 +2479,11 @@ function App() {
                           <option value="number">
                             Point number
                           </option>
+
                           <option value="confidence">
                             Model confidence
                           </option>
+
                           <option value="label">
                             Classification name
                           </option>
@@ -2546,6 +2574,7 @@ function App() {
                   <div className="panel-heading">
                     <div>
                       <h2>Survey album</h2>
+
                       <p>
                         Select a photograph to inspect
                         or analyze.
@@ -2680,9 +2709,11 @@ function App() {
                         <option value={5}>
                           5 × 5 · Up to 25 points
                         </option>
+
                         <option value={7}>
                           7 × 7 · Up to 49 points
                         </option>
+
                         <option value={10}>
                           10 × 10 · Up to 100 points
                         </option>
@@ -2766,6 +2797,7 @@ function App() {
                 <div className="panel-heading">
                   <div>
                     <h2>Point review table</h2>
+
                     <p>
                       Selections update current labels
                       only after confirmation.
@@ -2801,6 +2833,7 @@ function App() {
                       {rows.map(point => {
                         const decision =
                           activePhoto.decisions[point.point]
+
                         const draft =
                           activePhoto.drafts[point.point]
 
@@ -2835,7 +2868,9 @@ function App() {
                               )}
                             </td>
 
-                            <td>{percent(point.confidence)}</td>
+                            <td>
+                              {percent(point.confidence)}
+                            </td>
 
                             <td>
                               {pointStatus(activePhoto, point)}
@@ -2924,6 +2959,7 @@ function App() {
       <>
         <section className="panel directory-intro">
           <h2>The labels behind your observations</h2>
+
           <p>
             Examples below come from your analyzed photographs.
             A model prediction is not an independent biological
@@ -2972,6 +3008,7 @@ function App() {
 
                 <div className="card-title-row">
                   <h2>{pretty(label)}</h2>
+
                   <i
                     className="class-dot"
                     style={{ background: COLORS[label] }}
@@ -3021,7 +3058,9 @@ function App() {
             <span className="eyebrow">
               WORKSPACE DATA
             </span>
+
             <h2>{totalPoints} sampled points</h2>
+
             <p>
               Across {analyzedPhotos.length} analyzed
               photographs and {workspace.surveys.length} surveys.
@@ -3046,6 +3085,7 @@ function App() {
           <div className="panel-heading">
             <div>
               <h2>Export by survey</h2>
+
               <p>
                 CSV includes all analyzed points, original
                 predictions, confirmed labels and recorded
@@ -3075,9 +3115,11 @@ function App() {
                 >
                   <div>
                     <strong>{survey.name}</strong>
+
                     <span>
                       {site?.name} · {formatDate(survey.date)}
                     </span>
+
                     <small>
                       {analyzed} analyzed / {photos.length}{' '}
                       photographs
@@ -3122,6 +3164,7 @@ function App() {
       <aside className="sidebar">
         <div className="brand">
           <img src="/logo.png" alt="ReefEye logo" />
+
           <div>
             <strong>REEFEYE</strong>
             <span>Reef Observatory</span>
@@ -3144,6 +3187,7 @@ function App() {
                 if (item.id === 'review') {
                   setPendingOnly(true)
                 }
+
                 navigate(item.id)
               }}
             >
@@ -3191,6 +3235,7 @@ function App() {
             <span className="eyebrow">
               REEFEYE / WORKSPACE
             </span>
+
             <h1>{PAGE_INFO[page].title}</h1>
             <p>{PAGE_INFO[page].description}</p>
           </div>
@@ -3216,6 +3261,7 @@ function App() {
 
         <div className="workspace-status">
           <span role="status">{saveStatus}</span>
+
           <span>
             {workspace.surveys.length} surveys ·{' '}
             {workspace.photos.length} images
@@ -3225,6 +3271,7 @@ function App() {
         {error && (
           <div className="error-banner" role="alert">
             <span>{error}</span>
+
             <button
               className="text-button"
               onClick={() => setError('')}
@@ -3258,6 +3305,7 @@ function App() {
             <div className="panel-heading">
               <div>
                 <h2>Add monitoring site</h2>
+
                 <p>
                   Coordinates are optional and must describe
                   the actual site.
@@ -3278,6 +3326,7 @@ function App() {
             >
               <label className="field wide">
                 <span>Site name</span>
+
                 <input
                   className="input"
                   name="name"
@@ -3289,6 +3338,7 @@ function App() {
 
               <label className="field">
                 <span>Latitude · optional</span>
+
                 <input
                   className="input"
                   name="latitude"
@@ -3302,6 +3352,7 @@ function App() {
 
               <label className="field">
                 <span>Longitude · optional</span>
+
                 <input
                   className="input"
                   name="longitude"
@@ -3330,6 +3381,7 @@ function App() {
             <div className="panel-heading">
               <div>
                 <h2>Create survey</h2>
+
                 <p>
                   Group photographs from the same site visit.
                 </p>
@@ -3352,6 +3404,7 @@ function App() {
             >
               <label className="field">
                 <span>Monitoring site</span>
+
                 <select
                   className="input"
                   name="siteId"
@@ -3372,6 +3425,7 @@ function App() {
 
               <label className="field">
                 <span>Survey name</span>
+
                 <input
                   className="input"
                   name="name"
@@ -3383,6 +3437,7 @@ function App() {
 
               <label className="field">
                 <span>Survey date</span>
+
                 <input
                   className="input"
                   name="date"
@@ -3394,6 +3449,7 @@ function App() {
 
               <label className="field">
                 <span>Depth in meters · optional</span>
+
                 <input
                   className="input"
                   name="depth"
@@ -3407,6 +3463,7 @@ function App() {
                 <span>
                   Water visibility in meters · optional
                 </span>
+
                 <input
                   className="input"
                   name="visibility"
@@ -3418,6 +3475,7 @@ function App() {
 
               <label className="field">
                 <span>Photographs · optional</span>
+
                 <input
                   className="input file-input"
                   type="file"
@@ -3429,6 +3487,7 @@ function App() {
                     )
                   }
                 />
+
                 <small>
                   JPG, PNG or WebP · Maximum 10 MB per image
                 </small>
@@ -3436,6 +3495,7 @@ function App() {
 
               <label className="field wide">
                 <span>Survey notes · optional</span>
+
                 <textarea
                   className="input"
                   name="notes"
