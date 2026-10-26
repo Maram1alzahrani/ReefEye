@@ -232,6 +232,8 @@ The model-development workflow derives point labels from semantic masks and extr
 
 The two test views evaluate the **same six held-out sites** with complementary sampling protocols. Training, validation, calibration, and test partitions use separate dive sites.
 
+An additional dataset from the Red Sea was used for independent testing to evaluate the model's generalization performance on coral reef imagery.
+
 ## 10. Performance Metrics
 
 The following results come from the saved evaluation outputs for exported run `b03f3ddae1699f26`, matching the run identifier recorded in the application configuration.
